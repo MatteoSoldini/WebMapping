@@ -4,12 +4,12 @@
 		<meta charset=utf-8>
 		<title>My first three.js app</title>
 		<style>
-			body { margin: 0; }
+			body { margin: 0; overflow: hidden;}
 			canvas { width: 100%; height: 100% }
 		</style>
 	</head>
 	<body>
-		<script src="Three.js"></script>
+		<script src="three.js"></script>
 		<script>
 			var scene = new THREE.Scene();
 			var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
@@ -17,49 +17,39 @@
 			var renderer = new THREE.WebGLRenderer();
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				document.body.appendChild( renderer.domElement );
-			
+
 			var video = document.createElement('video');
-				video.autoplay  = true;
-				video.src = 'https://www.youtube.com/watch?v=RtU_mdL2vBM';
-				newcanvas = document.createElement('canvas');
-				context = newcanvas.getContext('2d');
-			
+				video.src = "movie.mp4";
+				video.load();
+				video.play()
+
 			var videocanvas = document.createElement('canvas');
 			var videocanvasctx = videocanvas.getContext('2d');
-			
+
 			videocanvas.width = 640;
 			videocanvas.height = 480;
-			
+
 			videocanvasctx.fillStyle = "#000000";
 			videocanvasctx.fillRect(0,0,640,480);
-			
-			var spheretexture = new THREE.Texture(newcanvas);
 
-			//add texture to material that will be wrapped around the sphere
-			var material = new THREE.MeshBasicMaterial( { map: spheretexture, overdraw: 0.5 } );
-			
-
-			//Use whatever values you were using for the sizes of the spheres before
+			var texture = new THREE.VideoTexture(video);
+			var material = new THREE.MeshBasicMaterial( { map: texture, overdraw: 0.5 } );
 			var sphere = new THREE.SphereGeometry(2)
-
-			//make a mesh from the material and the geometry (the sphere)
 			var sphereMesh = new THREE.Mesh(sphere, material);
 
-			
 			//camera.position.z = 5;
-			
+
 			function animate() {
 				requestAnimationFrame( animate );
-				
-	
+
 				videocanvasctx.drawImage(video, 0, 0);
-					
+
 				texture.needsUpdate = true;
 
 				renderer.render( scene, camera );
 			}
 			animate();
-		
+
 		</script>
 	</body>
 </html>
