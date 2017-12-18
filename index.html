@@ -14,6 +14,9 @@
 		var scene = new THREE.Scene;
 		var camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
 
+		var raycaster = new THREE.Raycaster(); // create once
+		var mouse = new THREE.Vector2(); // create once
+
 		var renderer = new THREE.WebGLRenderer();
 			renderer.setClearColor( 0x000000 );
 			renderer.setSize( window.innerWidth, window.innerHeight );
@@ -63,15 +66,34 @@
 
 		camera.position.z = 5;
 
+		function onMouseMove( event ) {
+			mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+			mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+		}
+
 		function render(){
+			console.log(scene.children);
+			raycaster.setFromCamera( mouse, camera );
+			var intersects = raycaster.intersectObjects( scene.children );
+
+			if (intersects.length == 1){
+				intersects[ 0 ].object.material.color.set( 0xe5e5e5 );
+			}
+			else{
+					for(i=0;i<scene.children.length;i++){
+						scene.children[i].material.color.set( 0xFFFFFF );
+					}
+			}
+
 			if(video.readyState === video.HAVE_ENOUGH_DATA){
 				texture.needsUpdate = true;
 			}
 			renderer.render(scene, camera);
 			window.requestAnimationFrame(render);
-			}
+		}
 
 		window.requestAnimationFrame(render);
+		window.addEventListener( 'mousemove', onMouseMove, false );
 		</script>
 	</body>
 </html>
