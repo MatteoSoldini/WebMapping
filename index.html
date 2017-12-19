@@ -3,27 +3,60 @@
 	<head>
 		<meta charset=utf-8>
 		<title>My first three.js app</title>
+		<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link type="text/css" rel="stylesheet" href="css/materialize.min.css"  media="screen,projection"/>
 		<style>
 			body { margin: 0; overflow: hidden;}
 			canvas { width: 100%; height: 100% }
+			#view {
+		    background-color: #000;
+		    width: 100%;
+		    height: 100%;
+		    border: 1px solid black;
+		    margin: 0px;
+		    padding: 0px;
+		    position: fixed;
+			}
+			nav{
+				display: flex;
+				align-items: center;
+			}
 		</style>
 	</head>
 	<body>
 		<script src="three.js"></script>
+		<script type="text/javascript" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script type="text/javascript" src="js/materialize.min.js"></script>
+
+		<div class="row">
+			<nav>
+	    	<div class="nav-wrapper">
+					<h5>Web Mapping</h5>
+				</div>
+			</nav>
+			<div class="col s2">Ciao</div>
+			<div class="col s10"><div id="view"></div></div>
+		</div>
 		<script>
+		var container = document.getElementById('view');
+
+		var width = container.offsetWidth;
+    var height = container.offsetHeight;
+
 		var pointerX = 0;
 		var pointerY = 0;
 		var mouseDown = false;
+
 		var scene = new THREE.Scene;
-		var camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
+		var camera = new THREE.OrthographicCamera( width / - 2, width / 2, height / 2, height / - 2 );
 
 		var raycaster = new THREE.Raycaster();
 		var mouse = new THREE.Vector2();
 
 		var renderer = new THREE.WebGLRenderer();
 			renderer.setClearColor( 0x000000 );
-			renderer.setSize( window.innerWidth, window.innerHeight );
-			document.body.appendChild( renderer.domElement );
+			renderer.setSize( width, height );
+			container.appendChild( renderer.domElement );
 
 		var video = new Object(document.createElement('video'));
 			video.src = "movie.mp4";
@@ -49,26 +82,26 @@
 			texture2.magFilter = THREE.LinearFilter;
 			texture2.format = THREE.RGBFormat;
 
-		var geometry = new THREE.PlaneGeometry( 3.2, 1.8, 0 );
+		var geometry = new THREE.PlaneGeometry( 600, 337.5, 0 );
 		var material = new THREE.MeshBasicMaterial( { map: texture, overdraw: 0.5 } );
 		var cube = new THREE.Mesh( geometry, material );
 
-		var geometry2 = new THREE.PlaneGeometry( 3.2, 1.8, 0 );
+		var geometry2 = new THREE.PlaneGeometry( 600, 337.5, 0 );
 		var material2 = new THREE.MeshBasicMaterial( { map: texture2, overdraw: 0.5 } );
 		var cube2 = new THREE.Mesh( geometry2, material2 );
 
 		scene.add( cube );
 		scene.add( cube2 );
 
-		cube.position.y = 1;
-		cube2.position.y = -1;
+		cube.position.y = 200;
+		cube2.position.y = -200;
 
 		camera.position.z = 5;
 
 		function onWindowResize(){
-		  camera.aspect = window.innerWidth / window.innerHeight;
+		  camera.aspect = width / height;
 		  camera.updateProjectionMatrix();
-		  renderer.setSize( window.innerWidth, window.innerHeight );
+		  renderer.setSize( width, height );
 		}
 
 		function onMouseDown( event ) {mouseDown = true;}
@@ -76,20 +109,21 @@
 
 		function onMouseMove( event ) {
 			event.preventDefault();
-			pointerX = (event.clientX / (window.innerWidth / 2))-1;
-			pointerY = (event.clientY / (window.innerHeight / 2))+1;
+			pointerX = event.clientX;
+			pointerY = -event.clientY;
+
+			mouse.x = ( event.clientX - (window.innerWidth*(2/12)) / width ) * 2 - 1;
+			mouse.y = - ( event.clientY / height ) * 2 + 1;
 			console.log(pointerX+" : "+pointerY);
-			mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-			mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
 
 			raycaster.setFromCamera( mouse, camera );
 			var intersects = raycaster.intersectObjects( scene.children ,true);
 
 			if (intersects.length > 0){
-				intersects[ 0 ].object.material.color.set( 0xffa5a5 );
+				intersects[0].object.material.color.set( 0xffa5a5 );
 				if (mouseDown == true)
 				{
-					intersects[0]["object"].position.set(mouse.x*6,mouse.y*2,0);
+					intersects[0]["object"].position.set(pointerX,pointerY,0);
 				}
 			}
 			else{
@@ -100,7 +134,7 @@
 		}
 
 		function render(){
-
+			//console.log(window.innerWidth+" : "+window.innerHeight)
 			if(video.readyState === video.HAVE_ENOUGH_DATA){
 				texture.needsUpdate = true;
 			}
