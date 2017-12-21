@@ -43,6 +43,9 @@
 		var width = container.offsetWidth;
     var height = container.offsetHeight;
 
+		var widthOffsetted = width - $('#view').offset().left;
+    var heightOffsetted = height - $('#view').offset().top;
+
 		var pointerX = 0;
 		var pointerY = 0;
 		var mouseDown = false;
@@ -109,12 +112,12 @@
 
 		function onMouseMove( event ) {
 			event.preventDefault();
-			pointerX = event.clientX;
-			pointerY = -event.clientY;
+			pointerX = event.clientX - $('#view').offset().left - (width - $('#view').offset().left)/2;
+			pointerY = event.clientY - $('#view').offset().top - (height - $('#view').offset().top)/2;
 
-			mouse.x = ( event.clientX - (window.innerWidth*(2/12)) / width ) * 2 - 1;
-			mouse.y = - ( event.clientY / height ) * 2 + 1;
-			console.log(pointerX+" : "+pointerY);
+			mouse.x = (pointerX / width);
+			mouse.y = - (pointerY / height);
+			console.log(pointerX + " : " + pointerY);
 
 			raycaster.setFromCamera( mouse, camera );
 			var intersects = raycaster.intersectObjects( scene.children ,true);
@@ -123,7 +126,7 @@
 				intersects[0].object.material.color.set( 0xffa5a5 );
 				if (mouseDown == true)
 				{
-					intersects[0]["object"].position.set(pointerX,pointerY,0);
+					intersects[0]["object"].position.set(pointerX,-pointerY,0);
 				}
 			}
 			else{
@@ -134,7 +137,6 @@
 		}
 
 		function render(){
-			//console.log(window.innerWidth+" : "+window.innerHeight)
 			if(video.readyState === video.HAVE_ENOUGH_DATA){
 				texture.needsUpdate = true;
 			}
