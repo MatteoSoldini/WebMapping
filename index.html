@@ -9,10 +9,9 @@
 			body { margin: 0; overflow: hidden;}
 			canvas { width: 100%; height: 100% }
 			#view {
-		    background-color: #000;
-		    width: 100%;
-		    height: 100%;
-		    border: 1px solid black;
+		    background-color: #3d3d3d;
+				width: 100%;
+				height: 100%;
 		    margin: 0px;
 		    padding: 0px;
 		    position: fixed;
@@ -40,25 +39,33 @@
 		<script>
 		var container = document.getElementById('view');
 
-		var width = container.offsetWidth;
-    var height = container.offsetHeight;
+		var selected = null;
 
-		var widthOffsetted = width - $('#view').offset().left;
-    var heightOffsetted = height - $('#view').offset().top;
+		var width = 1920;
+		var height = 818;
+
+		var containerWidth = container.offsetWidth;
+    var containerHeight = container.offsetHeight;
+
+		var viewWidth = containerWidth - $('#view').offset().left;
+    var viewHeight = containerHeight - $('#view').offset().top;
+
+		ratio = width / height;
+		viewHeight = viewWidth / ratio;
 
 		var pointerX = 0;
 		var pointerY = 0;
 		var mouseDown = false;
 
 		var scene = new THREE.Scene;
-		var camera = new THREE.OrthographicCamera( width / - 2, width / 2, height / 2, height / - 2 );
+		var camera = new THREE.OrthographicCamera( viewWidth / - 2, viewWidth / 2, viewHeight / 2, viewHeight / - 2 );
 
 		var raycaster = new THREE.Raycaster();
 		var mouse = new THREE.Vector2();
 
 		var renderer = new THREE.WebGLRenderer();
 			renderer.setClearColor( 0x000000 );
-			renderer.setSize( width, height );
+			renderer.setSize( viewWidth, viewHeight );
 			container.appendChild( renderer.domElement );
 
 		var video = new Object(document.createElement('video'));
@@ -85,58 +92,83 @@
 			texture2.magFilter = THREE.LinearFilter;
 			texture2.format = THREE.RGBFormat;
 
-		var geometry = new THREE.PlaneGeometry( 600, 337.5, 0 );
+		var geometry = new THREE.PlaneGeometry( 500, 281.25 );
 		var material = new THREE.MeshBasicMaterial( { map: texture, overdraw: 0.5 } );
 		var cube = new THREE.Mesh( geometry, material );
 
-		var geometry2 = new THREE.PlaneGeometry( 600, 337.5, 0 );
+		var geometry2 = new THREE.PlaneGeometry( 500, 281.25 );
 		var material2 = new THREE.MeshBasicMaterial( { map: texture2, overdraw: 0.5 } );
 		var cube2 = new THREE.Mesh( geometry2, material2 );
 
 		scene.add( cube );
 		scene.add( cube2 );
 
-		cube.position.y = 200;
-		cube2.position.y = -200;
+		//console.log(geometry.getSize())
+
+		cube.position.y = 150;
+		cube2.position.y = -150;
 
 		camera.position.z = 5;
 
-		function onWindowResize(){
-		  camera.aspect = width / height;
-		  camera.updateProjectionMatrix();
-		  renderer.setSize( width, height );
+		//getVideoSize("video");
+
+		function getVideoSize(element){
+			console.log(this[element])
+			this[element].addEventListener('loadedmetadata', function(e){
+				//var dimension = {width: (this[element].videoWidth), height: (this[element].videoHeight)};
+				//return dimension;
+				console.log(this[element].videoWidth);
+			})
 		}
 
-		function onMouseDown( event ) {mouseDown = true;}
-		function onMouseUp( event ) {mouseDown = false;}
+		function onWindowResize(){
+			containerWidth = container.offsetWidth;
+	    containerHeight = container.offsetHeight;
+			viewWidth = containerWidth - $('#view').offset().left;
+	    viewHeight = containerHeight - $('#view').offset().top;
 
-		function onMouseMove( event ) {
-			event.preventDefault();
-			pointerX = event.clientX - $('#view').offset().left - (width - $('#view').offset().left)/2;
-			pointerY = event.clientY - $('#view').offset().top - (height - $('#view').offset().top)/2;
+			ratio = width / height;
+			viewHeight = viewWidth / ratio;
+		  camera.aspect = viewWidth / viewHeight;
+		  camera.updateProjectionMatrix();
+		  renderer.setSize( viewWidth, viewHeight );
+		}
 
-			mouse.x = (pointerX / width);
-			mouse.y = - (pointerY / height);
-			console.log(pointerX + " : " + pointerY);
-
+		function onMouseDown( event ) {
+			mouseDown = true;
 			raycaster.setFromCamera( mouse, camera );
 			var intersects = raycaster.intersectObjects( scene.children ,true);
 
 			if (intersects.length > 0){
-				intersects[0].object.material.color.set( 0xffa5a5 );
-				if (mouseDown == true)
-				{
-					intersects[0]["object"].position.set(pointerX,-pointerY,0);
-				}
+				if (selected != null){selected.object.material.color.set( 0xFFFFFF );}
+				selected = intersects[0];
+				selected.object.material.color.set( 0xffa5a5 );
 			}
 			else{
-				for(i=0;i<scene.children.length;i++){
-					scene.children[i].material.color.set( 0xFFFFFF );
-				}
+				selected.object.material.color.set( 0xFFFFFF );
+				selected = null;
 			}
 		}
 
+		function onMouseUp( event ) {mouseDown = false;}
+
+		function onMouseMove( event ) {
+			event.preventDefault();
+			pointerX = event.clientX - $('#view').offset().left - viewWidth/2;
+			pointerY = event.clientY - $('#view').offset().top - viewHeight/2;
+
+			mouse.x = (pointerX / viewWidth)*2;
+			mouse.y = - (pointerY / viewHeight)*2;
+
+			//----------------------------------------------------
+
+			if (mouseDown == true && selected != null){
+					selected["object"].position.set(pointerX,-pointerY,0);
+				}
+		}
+
 		function render(){
+			//console.log( viewWidth + " " + viewHeight + " : " + pointerX + " " + pointerY );
 			if(video.readyState === video.HAVE_ENOUGH_DATA){
 				texture.needsUpdate = true;
 			}
@@ -149,6 +181,11 @@
 		window.addEventListener( 'mousedown', onMouseDown, false );
 		window.addEventListener( 'mouseup', onMouseUp, false );
 		window.addEventListener( 'resize', onWindowResize, false );
+		/*var v = "video";
+		this[v].addEventListener('loadedmetadata', function(e){
+    	console.log([v].videoWidth, [v].videoHeight);
+		});*/
+		javascript:(function(){var script=document.createElement('script');script.onload=function(){var stats=new Stats();document.body.appendChild(stats.dom);requestAnimationFrame(function loop(){stats.update();requestAnimationFrame(loop)});};script.src='//rawgit.com/mrdoob/stats.js/master/build/stats.min.js';document.head.appendChild(script);})()
 		</script>
 	</body>
 </html>
