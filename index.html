@@ -33,10 +33,15 @@
 					<h5>Web Mapping</h5>
 				</div>
 			</nav>
-			<div class="col s2">Ciao</div>
+			<div class="col s2">
+				<a class="waves-effect waves-light btn" id="method">Translate Mode</a>
+			</div>
 			<div class="col s10"><div id="view"></div></div>
 		</div>
 		<script>
+		var length = 0;
+		marker = {};
+
 		var container = document.getElementById('view');
 
 		var selected = null;
@@ -93,6 +98,7 @@
 			texture2.format = THREE.RGBFormat;
 
 		var geometry = new THREE.PlaneGeometry( 500, 281.25 );
+		geometry.dynamic = true;
 		var material = new THREE.MeshBasicMaterial( { map: texture, overdraw: 0.5 } );
 		var cube = new THREE.Mesh( geometry, material );
 
@@ -103,10 +109,18 @@
 		scene.add( cube );
 		scene.add( cube2 );
 
-		//console.log(geometry.getSize())
+		//console.log(cube.geometry.vertices);
+
+		cube.geometry.dynamic = true;
+		cube.geometry.__dirtyVertices = true;
 
 		cube.position.y = 150;
+		cube.position.x = 150;
+
 		cube2.position.y = -150;
+
+		cube.geometry.vertices[0].x = 150;
+		cube.geometry.vertices[0].y = 150;
 
 		camera.position.z = 5;
 
@@ -140,12 +154,36 @@
 			var intersects = raycaster.intersectObjects( scene.children ,true);
 
 			if (intersects.length > 0){
-				if (selected != null){selected.object.material.color.set( 0xFFFFFF );}
+				if (selected != null){
+					selected.object.material.color.set( 0xFFFFFF );
+					for (i = 0; i < length; i++) {scene.remove( marker[i] );}
+				}
+
 				selected = intersects[0];
 				selected.object.material.color.set( 0xffa5a5 );
+
+				for(i = 0; i < (selected["object"].geometry.vertices).length; i++){
+
+					var geometry = new THREE.PlaneGeometry( 15, 15 );
+					var material = new THREE.MeshBasicMaterial( {color: 0xffa5a5, side: THREE.DoubleSide} );
+					marker[i] = new THREE.Mesh( geometry, material );
+
+					scene.add( marker[i] );
+					length++;
+
+					var vector = selected["object"].geometry.vertices[i].clone();
+					vector.applyMatrix4( selected["object"].matrixWorld );
+
+					marker[i].position.x = vector.x
+					marker[i].position.y = vector.y
+				}
 			}
+
 			else{
-				selected.object.material.color.set( 0xFFFFFF );
+				if (selected != null){
+					selected.object.material.color.set( 0xFFFFFF );
+					for (i = 0; i < length; i++) {scene.remove( marker[i] );}
+				}
 				selected = null;
 			}
 		}
@@ -159,8 +197,6 @@
 
 			mouse.x = (pointerX / viewWidth)*2;
 			mouse.y = - (pointerY / viewHeight)*2;
-
-			//----------------------------------------------------
 
 			if (mouseDown == true && selected != null){
 					selected["object"].position.set(pointerX,-pointerY,0);
